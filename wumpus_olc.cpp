@@ -37,6 +37,7 @@ public:
 
 	sButton btnShoot;
 	sButton btnMove;
+	std::vector<sButton> vTiles {std::vector<sButton>(20)};
 	
 private:
 	olc::vi2d center {ScreenWidth()/2,ScreenHeight()/2};
@@ -59,11 +60,18 @@ private:
 		olc::MAGENTA, olc::DARK_MAGENTA, olc::VERY_DARK_MAGENTA,
 		olc::WHITE, olc::BLACK, olc::BLANK
 	};
+
+	olc::Pixel line_border {255,255,254};
+
+	// Sprite that holds all imagery
 	olc::Sprite *sprIsom = nullptr;
 
 public:
 	bool OnUserCreate() override
 	{
+		// Load sprites used in demonstration
+		sprIsom = new olc::Sprite("tiles.png");
+
 		//Create Buttons
 		btnShoot.vPos = {ScreenWidth()*(1/4.0),ScreenHeight()*(9/10.0)};
 		btnShoot.vSize = {50, 15};
@@ -89,7 +97,27 @@ public:
 		{
 			points_outer.push_back({static_cast<int>(center.x+75*cos((i*smallest_division)+offset)),static_cast<int>(center.y+75*sin((i*smallest_division)+offset))});
 		}
-		
+
+		//Tile buttons
+		olc::vi2d center_offset {center.x-2,center.y-2}; //hack to try and center some of the squares... 
+		for (int i = 0; i < vTiles.size()/4; i++)
+		{
+			vTiles[i].vPos = {static_cast<int>(center_offset.x+(25/2)*cos((i*smallest_division)+offset)),static_cast<int>(center_offset.y+(25/2)*sin(i*smallest_division+offset))};
+			vTiles[i].vSize = {5, 5};
+			vTiles[i].sText = " ";
+		}
+		for (int i = 5; i < vTiles.size()*3/4; i++)
+		{
+			vTiles[i].vPos = {static_cast<int>(center_offset.x+(7+25)*cos((i*(smallest_division/2)))),static_cast<int>(center_offset.y+(7+25)*sin(i*(smallest_division/2)))};
+			vTiles[i].vSize = {5, 5};
+			vTiles[i].sText = " ";
+		}
+		for (int i = 15; i < vTiles.size(); i++)
+		{
+			vTiles[i].vPos = {static_cast<int>(center_offset.x+(50)*cos((i*smallest_division))),static_cast<int>(center_offset.y+(50)*sin(i*smallest_division))};
+			vTiles[i].vSize = {5, 5};
+			vTiles[i].sText = " ";
+		}
 		return true;
 	}
 
@@ -97,6 +125,8 @@ public:
 	{
 		// Erase previous frame
 		Clear(olc::Pixel(0,128,148));
+		SetPixelMode(olc::Pixel::MASK);
+		DrawSprite({53,center.y-(143/2)},sprIsom);
 
 		// Get Mouse in world
 		olc::vi2d vMouse = { GetMouseX(), GetMouseY() };
@@ -105,34 +135,46 @@ public:
 		btnShoot.Draw(this);
 		btnMove.Draw(this);
 
-		// Map layout
-		FillTriangle(center,points_inner[4],points_inner[0],colors[15]);
-		DrawTriangle(center,points_inner[4],points_inner[0]);
+		
+		// Map layout (TO REDO: Draw map layout as sprite, use the getpixelcolor to act as a button)
+		/*
+		FillTriangle(points_outer[4],points_outer[0],center,colors[21]);
+		for (int i = 0 ; i<points_outer.size()-1; i++)
+		{
+			FillTriangle(points_outer[i],points_outer[i+1],center,colors[17+i]);
+		}
+
+		FillTriangle(center,points_inner[4],points_inner[0],colors[14]);
+		DrawTriangle(center,points_inner[4],points_inner[0],line_border);
 		for (int i = 0 ; i<points_inner.size()-1; i++)
 		{
 			FillTriangle(center,points_inner[i],points_inner[i+1],colors[i]);
-			DrawTriangle(center,points_inner[i],points_inner[i+1]);
+			DrawTriangle(center,points_inner[i],points_inner[i+1],line_border);
 		}
-		FillTriangle(points_inner[4],points_inner[0],points_middle[4],colors[16]);
-		FillTriangle(points_inner[0],points_middle[0],points_middle[4],colors[17]);
-		DrawTriangle(points_inner[4],points_inner[0],points_middle[4]);
-		DrawTriangle(points_inner[0],points_middle[0],points_middle[4]);
+		FillTriangle(points_inner[4],points_inner[0],points_middle[4],colors[15]);
+		FillTriangle(points_inner[0],points_middle[0],points_middle[4],colors[16]);
+		DrawTriangle(points_inner[4],points_inner[0],points_middle[4],line_border);
+		DrawTriangle(points_inner[0],points_middle[0],points_middle[4],line_border);
 		for (int i = 0 ; i<points_middle.size()-1; i++)
 		{
-			FillTriangle(points_inner[i],points_inner[i+1],points_middle[i],colors[5+i]);
-			FillTriangle(points_inner[i+1],points_middle[i+1],points_middle[i],colors[10+i]);
-			DrawTriangle(points_inner[i],points_inner[i+1],points_middle[i]);
-			DrawTriangle(points_inner[i+1],points_middle[i+1],points_middle[i]);
+			FillTriangle(points_inner[i],points_inner[i+1],points_middle[i],colors[4+i]);
+			FillTriangle(points_inner[i+1],points_middle[i+1],points_middle[i],colors[9+i]);
+			DrawTriangle(points_inner[i],points_inner[i+1],points_middle[i],line_border);
+			DrawTriangle(points_inner[i+1],points_middle[i+1],points_middle[i],line_border);
 		}
 
-		DrawLine(points_outer[4],points_outer[0]);
-		DrawLine(points_outer[4],points_middle[4]);
+		DrawLine(points_outer[4],points_outer[0],line_border);
+		DrawLine(points_outer[4],points_middle[4],line_border);
 		for (int i = 0 ; i<points_outer.size()-1; i++)
 		{
 			//FillRect();
-			DrawLine(points_outer[i],points_outer[i+1]);
-			DrawLine(points_outer[i],points_middle[i]);
-		}
+			DrawLine(points_outer[i],points_outer[i+1],line_border);
+			DrawLine(points_outer[i],points_middle[i],line_border);
+		}*/
+
+		//Tile buttons
+		for (sButton& s : vTiles)
+			s.Draw(this);
 
 		if (GetMouse(0).bPressed)
 		{
@@ -145,7 +187,16 @@ public:
 			{
 				std::cout<<"MOVE\t";
 			}
+
+			//if(sprite clicked)
 			
+			else
+			{
+				std::cout<<"here";
+				// Sample into cell offset colour
+				olc::Pixel col = sprIsom->GetPixel(GetMousePos().x-53,GetMousePos().y-48);
+				std::cout<<(col==colors[0]);
+			}
 		}
 		return true;
 	}
